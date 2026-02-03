@@ -1,0 +1,104 @@
+// Prisma Schema for Baby Name Application
+// 版本: 2.0.0
+// 数据库: Supabase PostgreSQL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 授权码表 - 一客一码机制
+model AuthorizationCode {
+  id          Int      @id @default(autoincrement())
+  code        String   @unique              // 授权码（格式：BABY-XXXX-XXXX-XXXX-XXXX，16位）
+  status      String   @default("UNUSED")   // 状态: UNUSED(未使用)/USED(已使用)/EXPIRED(已过期)
+  deviceId    String?                       // 绑定设备指纹（User-Agent + IP的SHA256）
+  activatedAt DateTime?                     // 激活时间
+  activatedIp String?                       // 激活IP（安全审计）
+  expiresAt   DateTime?                     // 未激活授权码90天过期（createdAt + 90天）
+  batchId     String?                       // 批次ID
+  metadata    String?                       // 元数据 (JSON)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  usageRecords UsageRecord[]
+
+  @@index([status])
+  @@index([deviceId])
+  @@index([batchId])
+  @@map("authorization_code")
+}
+
+// 使用记录表
+model UsageRecord {
+  id             Int      @id @default(autoincrement())
+  codeId         Int                        // 关联授权码
+  code           String                     // 授权码
+  userId         String                     // 用户ID（从JWT解析）
+  deviceId       String                     // 设备ID
+  babyInfo       Json                       // 宝宝信息 (JSON)
+  aiResult       Json                       // AI生成结果 (JSON)
+  generationTime Int?                       // 生成耗时 (ms)
+  createdAt      DateTime @default(now())
+
+  authorizationCode AuthorizationCode @relation(fields: [codeId], references: [id])
+
+  @@index([codeId])
+  @@index([userId])
+  @@index([deviceId])
+  @@index([createdAt])
+  @@map("usage_record")
+}
+
+// 收藏表 - 云端同步
+model Favorite {
+  id        BigInt   @id @default(autoincrement())
+  userId    String                        // 用户ID（从JWT解析）
+  nameId    String   @default("")          // 名字ID (用于去重)
+  nameData  Json                          // 完整名字数据（与前端类型定义一致）
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, nameId], name: "user_name_unique") // 防止重复收藏
+  @@index([userId])
+  @@index([createdAt])
+  @@map("favorites")
+}
+
+// 管理员表
+model AdminUser {
+  id           Int       @id @default(autoincrement())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  role         String    @default("ADMIN")
+  email        String?   @unique
+  lastLoginAt  DateTime? @map("last_login_at")
+  lastLoginIp  String?   @map("last_login_ip")
+  isActive     Boolean   @default(true) @map("is_active")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("admin_user")
+}
+
+// 埋点事件表
+model AnalyticsEvent {
+  id        BigInt   @id @default(autoincrement())
+  eventName String   @map("event_name")
+  deviceId  String?
+  sessionId String?  @map("session_id")
+  codeId    Int?     @map("code_id")
+  properties String? // JSON 字符串
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([eventName])
+  @@index([deviceId])
+  @@index([createdAt])
+  @@map("analytics_event")
+}

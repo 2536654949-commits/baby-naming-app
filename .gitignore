@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+**/node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.*
+!.env.example
+*.local
+
+# Build output
+dist/
+**/dist/
+build/
+**/build/
+
+# Logs
+logs/
+*.log
+**/*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Prisma
+prisma/migrations/*_*/migration.sql
+!prisma/migrations/*_*/migration.sql.bak
+
+# Testing
+coverage/
+.nyc_output/
+
+# Claude planning files
+.claude-plans/
+.claude/
+
+# Test documents
+test_*.md
+nul
