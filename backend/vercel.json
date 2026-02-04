@@ -3,18 +3,14 @@
   "name": "baby-name-backend",
   "builds": [
     {
-      "src": "dist/server.js",
+      "src": "src/index.ts",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "dist/server.js"
-    },
-    {
-      "src": "/health",
-      "dest": "dist/server.js"
+      "src": "/(.*)",
+      "dest": "src/index.ts"
     }
   ],
   "env": {
