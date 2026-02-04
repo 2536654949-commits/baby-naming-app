@@ -1,51 +1,43 @@
+# 文档类文件（不推送到GitHub）
+AGENTS.md
+CLAUDE.md
+openspec/
+产品需求/
+技术方案/
+运营文档/
+
 # Dependencies
 node_modules/
-**/node_modules/
+.pnp
+.pnp.js
+
+# Testing
+coverage/
+
+# Production
+build/
+dist/
+
+# Misc
+.DS_Store
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-pnpm-debug.log*
-
-# Environment variables
-.env
-.env.*
-!.env.example
-*.local
-
-# Build output
-dist/
-**/dist/
-build/
-**/build/
-
-# Logs
 logs/
 *.log
-**/*.log
 
 # IDE
 .vscode/
 .idea/
 *.swp
 *.swo
-*~
 
-# OS
-.DS_Store
-Thumbs.db
-
-# Prisma
-prisma/migrations/*_*/migration.sql
-!prisma/migrations/*_*/migration.sql.bak
-
-# Testing
-coverage/
-.nyc_output/
-
-# Claude planning files
-.claude-plans/
-.claude/
-
-# Test documents
-test_*.md
-nul
+# Vercel
+.vercel
