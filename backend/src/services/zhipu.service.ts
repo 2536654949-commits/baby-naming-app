@@ -17,16 +17,16 @@ class ZhipuService {
   private readonly topP?: number;
 
   constructor() {
-    this.apiKey = (process.env.ZHIPU_API_KEY || '').replace(/^"|"$/g, '');
-    this.apiUrl = (process.env.ZHIPU_API_URL || 'https://api.deepseek.com/v1/chat/completions').replace(/^"|"$/g, '');
-    this.model = (process.env.ZHIPU_MODEL || 'deepseek-chat').replace(/^"|"$/g, '');
+    this.apiKey = (process.env.AI_API_KEY || '').replace(/^"|"$/g, '');
+    this.apiUrl = (process.env.AI_API_URL || 'https://api.deepseek.com/v1/chat/completions').replace(/^"|"$/g, '');
+    this.model = (process.env.AI_MODEL || 'deepseek-chat').replace(/^"|"$/g, '');
     this.hasApiKey = Boolean(this.apiKey);
 
     const isDeepSeek = this.apiUrl.includes('deepseek') || this.model.includes('deepseek');
-    const timeoutEnv = process.env.ZHIPU_API_TIMEOUT ? Number(process.env.ZHIPU_API_TIMEOUT) : undefined;
-    const maxTokensEnv = process.env.ZHIPU_MAX_TOKENS ? Number(process.env.ZHIPU_MAX_TOKENS) : undefined;
-    const temperatureEnv = process.env.ZHIPU_TEMPERATURE ? Number(process.env.ZHIPU_TEMPERATURE) : undefined;
-    const topPEnv = process.env.ZHIPU_TOP_P ? Number(process.env.ZHIPU_TOP_P) : undefined;
+    const timeoutEnv = process.env.AI_API_TIMEOUT ? Number(process.env.AI_API_TIMEOUT) : undefined;
+    const maxTokensEnv = process.env.AI_MAX_TOKENS ? Number(process.env.AI_MAX_TOKENS) : undefined;
+    const temperatureEnv = process.env.AI_TEMPERATURE ? Number(process.env.AI_TEMPERATURE) : undefined;
+    const topPEnv = process.env.AI_TOP_P ? Number(process.env.AI_TOP_P) : undefined;
 
     this.timeout = (timeoutEnv !== undefined && Number.isFinite(timeoutEnv) && timeoutEnv > 0)
       ? timeoutEnv
@@ -121,7 +121,7 @@ class ZhipuService {
     const startTime = Date.now();
 
     if (!this.hasApiKey) {
-      logger.error('AI服务未配置ZHIPU_API_KEY，无法生成名字');
+      logger.error('AI服务未配置AI_API_KEY，无法生成名字');
       throw new ApiError('AI_SERVICE_UNAVAILABLE', 'AI服务暂不可用，请稍后再试', 503);
     }
 
@@ -346,7 +346,7 @@ class ZhipuService {
    */
   async healthCheck(): Promise<boolean> {
     if (!this.hasApiKey) {
-      logger.warn('AI服务未配置ZHIPU_API_KEY，健康检查跳过');
+      logger.warn('AI服务未配置AI_API_KEY，健康检查跳过');
       return false;
     }
     try {
