@@ -8,8 +8,14 @@ import type { ApiResponse, ApiError } from '../../types';
 
 export type { ApiResponse, ApiError };
 
+const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
+const normalizedBaseUrl = rawBaseUrl ? rawBaseUrl.replace(/\/+$/, '') : '';
+const baseURL = rawBaseUrl
+  ? (normalizedBaseUrl.endsWith('/api') ? normalizedBaseUrl : `${normalizedBaseUrl}/api`)
+  : '/api';
+
 const apiInstance: AxiosInstance = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL,
   timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',
