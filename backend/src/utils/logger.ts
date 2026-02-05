@@ -5,6 +5,7 @@
 
 import winston from 'winston';
 import path from 'path';
+import fs from 'fs';
 
 // 日志级别定义
 const levels = {
@@ -54,30 +55,48 @@ const consoleFormat = winston.format.combine(
   )
 );
 
+const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+const logDir = path.join(process.cwd(), 'logs');
+
 // 传输器配置
-const transports: winston.transport[] = [
+const transports: winston.transport[] = [];
+
+if (!isServerless) {
+  if (!fs.existsSync(logDir)) {
+    fs.mkdirSync(logDir, { recursive: true });
+  }
+
   // 错误日志文件
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'error.log'),
-    level: 'error',
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
+      level: 'error',
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    })
+  );
+
   // 全部日志文件
-  new winston.transports.File({
-    filename: path.join(process.cwd(), 'logs', 'combined.log'),
-    maxsize: 5242880, // 5MB
-    maxFiles: 5,
-  }),
-];
+  transports.push(
+    new winston.transports.File({
+      filename: path.join(logDir, 'combined.log'),
+      maxsize: 5242880, // 5MB
+      maxFiles: 5,
+    })
+  );
+}
 
 // 开发环境添加控制台输出
-if (process.env.NODE_ENV !== 'production') {
+if (!isServerless && process.env.NODE_ENV !== 'production') {
   transports.push(
     new winston.transports.Console({
       format: consoleFormat,
     })
   );
+}
+
+if (isServerless) {
+  transports.push(new winston.transports.Console({ format: consoleFormat }));
 }
 
 // 创建Logger实例
@@ -98,13 +117,15 @@ export const httpLogger = winston.createLogger({
     winston.format.timestamp(),
     winston.format.json()
   ),
-  transports: [
-    new winston.transports.File({
-      filename: path.join(process.cwd(), 'logs', 'http.log'),
-      maxsize: 5242880,
-      maxFiles: 5,
-    }),
-  ],
+  transports: isServerless
+    ? [new winston.transports.Console({ format: consoleFormat })]
+    : [
+      new winston.transports.File({
+        filename: path.join(logDir, 'http.log'),
+        maxsize: 5242880,
+        maxFiles: 5,
+      }),
+    ],
 });
 
 export default logger;
