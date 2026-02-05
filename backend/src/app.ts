@@ -31,6 +31,7 @@ export function createApp(): Application {
   app.use(requestLogger);
 
   app.use('/api', apiRouter);
+  app.use('/', apiRouter);
 
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
