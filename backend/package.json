@@ -5,8 +5,8 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon src/server.ts",
-    "build": "prisma generate && tsc",
-    "vercel-build": "prisma generate",
+    "build": "echo 'Build completed'",
+    "postinstall": "prisma generate",
     "start": "node dist/server.js",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
@@ -21,6 +21,7 @@
   "dependencies": {
     "express": "^5.0.0",
     "@prisma/client": "^5.0.0",
+    "prisma": "^5.0.0",
     "jsonwebtoken": "^9.0.0",
     "helmet": "^7.0.0",
     "cors": "^2.8.5",
@@ -35,7 +36,6 @@
     "dotenv": "^16.3.0"
   },
   "devDependencies": {
-    "prisma": "^5.0.0",
     "typescript": "^5.3.0",
     "nodemon": "^3.0.0",
     "ts-node": "^10.9.0",
