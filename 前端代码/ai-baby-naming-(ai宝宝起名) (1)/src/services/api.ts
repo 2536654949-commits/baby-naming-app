@@ -16,7 +16,7 @@ const baseURL = rawBaseUrl
 
 const apiInstance: AxiosInstance = axios.create({
   baseURL,
-  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 30000,
+  timeout: parseInt(import.meta.env.VITE_API_TIMEOUT) || 90000,
   headers: {
     'Content-Type': 'application/json',
   },
