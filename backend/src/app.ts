@@ -16,9 +16,23 @@ export function createApp(): Application {
     crossOriginEmbedderPolicy: false,
   }));
 
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  // 支持多个前端地址（用逗号分隔）
+  const frontendUrls = (process.env.FRONTEND_URL || 'http://localhost:5173')
+    .split(',')
+    .map(url => url.trim());
+
   app.use(cors({
-    origin: frontendUrl,
+    origin: (origin, callback) => {
+      // 允许无 origin 的请求（如移动端应用、Postman等）
+      if (!origin) {
+        return callback(null, true);
+      }
+      // 检查是否在允许列表中
+      if (frontendUrls.some(url => origin === url || origin.startsWith(url.replace(/\/$/, '')))) {
+        return callback(null, true);
+      }
+      callback(new Error('CORS not allowed'));
+    },
     credentials: true,
   }));
 
