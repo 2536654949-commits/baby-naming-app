@@ -1,14 +1,12 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
-import { generateName } from '@/src/services/name.service';
 import { NameInputParams } from '@/src/services/name.service';
 import { isAuthenticated } from '@/src/services/auth.service';
 
 const InputPage: React.FC = () => {
   const navigate = useNavigate();
   const [gender, setGender] = useState<'male' | 'female' | null>(null);
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const [formData, setFormData] = useState({
@@ -48,33 +46,13 @@ const InputPage: React.FC = () => {
       requirements: formData.requirements.trim() || undefined
     };
 
-    setLoading(true);
-    setError('');
-
-    try {
-      const response = await generateName(params);
-
-      if (response.success && response.data) {
-        navigate('/loading', {
-          state: {
-            names: response.data.names,
-            generationTime: response.data.generationTime
-          }
-        });
+    // 立即跳转到loading页面，在loading页面执行API请求
+    navigate('/loading', {
+      state: {
+        babyInfo: params,
+        isGenerating: true
       }
-    } catch (error: any) {
-      if (error.response?.status === 429) {
-        const waitSeconds = error.response?.data?.error?.waitSeconds;
-        setError(`请求过于频繁，请等待${waitSeconds}秒后再试`);
-      } else if (error.response?.status === 401) {
-        navigate('/activation', { replace: true });
-      } else {
-        const errorMsg = error.response?.data?.error?.message;
-        setError(errorMsg || '生成失败，请重试');
-      }
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (
@@ -99,7 +77,6 @@ const InputPage: React.FC = () => {
               onChange={(e) => handleInputChange('surname', e.target.value)}
               placeholder="请输入姓氏，如：李"
               className="w-full h-14 rounded-xl border-none bg-white text-slate-900 px-4 text-base font-medium shadow-sm ring-1 ring-gray-100 focus:ring-2 focus:ring-primary/50 transition-all placeholder:text-gray-400"
-              disabled={loading}
             />
           </div>
 
@@ -113,8 +90,7 @@ const InputPage: React.FC = () => {
                   setGender('male');
                   if (error) setError('');
                 }}
-                disabled={loading}
-                className={`h-14 rounded-xl border-2 flex items-center justify-center transition-all ${gender === 'male' ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-transparent bg-white text-slate-900 shadow-sm ring-1 ring-gray-100'} disabled:opacity-50`}
+                className={`h-14 rounded-xl border-2 flex items-center justify-center transition-all ${gender === 'male' ? 'border-blue-400 bg-blue-50 text-blue-600' : 'border-transparent bg-white text-slate-900 shadow-sm ring-1 ring-gray-100'}`}
               >
                 <span className="font-semibold">男</span>
               </button>
@@ -124,8 +100,7 @@ const InputPage: React.FC = () => {
                   setGender('female');
                   if (error) setError('');
                 }}
-                disabled={loading}
-                className={`h-14 rounded-xl border-2 flex items-center justify-center transition-all ${gender === 'female' ? 'border-pink-400 bg-pink-50 text-pink-600' : 'border-transparent bg-white text-slate-900 shadow-sm ring-1 ring-gray-100'} disabled:opacity-50`}
+                className={`h-14 rounded-xl border-2 flex items-center justify-center transition-all ${gender === 'female' ? 'border-pink-400 bg-pink-50 text-pink-600' : 'border-transparent bg-white text-slate-900 shadow-sm ring-1 ring-gray-100'}`}
               >
                  <span className="font-semibold">女</span>
               </button>
@@ -136,20 +111,30 @@ const InputPage: React.FC = () => {
           <div className="flex flex-col gap-2">
             <label className="text-[15px] font-semibold text-slate-800">出生日期与时间</label>
             <div className="grid grid-cols-2 gap-3">
-              <input
-                type="date"
-                value={formData.birthDate}
-                onChange={(e) => handleInputChange('birthDate', e.target.value)}
-                className="h-14 rounded-xl bg-white text-slate-900 px-4 text-sm font-medium shadow-sm ring-1 ring-gray-100 focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-50"
-                disabled={loading}
-              />
-              <input
-                type="time"
-                value={formData.birthTime}
-                onChange={(e) => handleInputChange('birthTime', e.target.value)}
-                className="h-14 rounded-xl bg-white text-slate-900 px-4 text-sm font-medium shadow-sm ring-1 ring-gray-100 focus:ring-2 focus:ring-primary/50 transition-all disabled:opacity-50"
-                disabled={loading}
-              />
+              <div
+                className="relative h-14 rounded-xl bg-white shadow-sm ring-1 ring-gray-100 focus-within:ring-2 focus-within:ring-primary/50 transition-all cursor-pointer"
+                onClick={() => document.getElementById('birthDateInput')?.showPicker?.()}
+              >
+                <input
+                  id="birthDateInput"
+                  type="date"
+                  value={formData.birthDate}
+                  onChange={(e) => handleInputChange('birthDate', e.target.value)}
+                  className="absolute inset-0 w-full h-full rounded-xl bg-transparent text-slate-900 px-4 text-sm font-medium cursor-pointer"
+                />
+              </div>
+              <div
+                className="relative h-14 rounded-xl bg-white shadow-sm ring-1 ring-gray-100 focus-within:ring-2 focus-within:ring-primary/50 transition-all cursor-pointer"
+                onClick={() => document.getElementById('birthTimeInput')?.showPicker?.()}
+              >
+                <input
+                  id="birthTimeInput"
+                  type="time"
+                  value={formData.birthTime}
+                  onChange={(e) => handleInputChange('birthTime', e.target.value)}
+                  className="absolute inset-0 w-full h-full rounded-xl bg-transparent text-slate-900 px-4 text-sm font-medium cursor-pointer"
+                />
+              </div>
             </div>
           </div>
 
@@ -162,8 +147,7 @@ const InputPage: React.FC = () => {
                 onChange={(e) => handleInputChange('requirements', e.target.value)}
                 placeholder="例如：希望名字中包含“远”字，避开“金”属性，或者有特定的寓意偏好"
                 maxLength={200}
-                className="w-full min-h-[120px] rounded-xl border-none bg-white p-4 text-base resize-none shadow-sm ring-1 ring-gray-100 focus:ring-2 focus:ring-primary/50 placeholder:text-gray-400 disabled:opacity-50"
-                disabled={loading}
+                className="w-full min-h-[120px] rounded-xl border-none bg-white p-4 text-base resize-none shadow-sm ring-1 ring-gray-100 focus:ring-2 focus:ring-primary/50 placeholder:text-gray-400"
               ></textarea>
               <div className="absolute bottom-3 right-3 text-[10px] font-medium text-gray-400">
                 {formData.requirements.length}/200
@@ -183,10 +167,9 @@ const InputPage: React.FC = () => {
       <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white/80 backdrop-blur-md border-t border-gray-100 p-4 pb-8 z-20">
         <button
           onClick={handleSubmit}
-          disabled={loading}
-          className="w-full bg-primary hover:bg-pink-600 text-white font-bold h-14 rounded-2xl shadow-glow transition-all active:scale-95 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full bg-primary hover:bg-pink-600 text-white font-bold h-14 rounded-2xl shadow-glow transition-all active:scale-95 text-lg"
         >
-          {loading ? '生成中...' : '开始起名'}
+          开始起名
         </button>
       </div>
     </div>

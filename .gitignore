@@ -5,6 +5,12 @@ openspec/
 产品需求/
 技术方案/
 运营文档/
+代码测试/
+开发指南/
+
+# AI助手和临时文件
+.claude/
+nul
 
 # Dependencies
 node_modules/

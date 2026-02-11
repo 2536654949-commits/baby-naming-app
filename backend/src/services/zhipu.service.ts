@@ -1,9 +1,11 @@
-﻿import axios, { AxiosError } from 'axios';
+﻿import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 import logger from '../utils/logger';
 import { NameGenerationParams, NameResult } from '../types';
-import { ZhipuRequest, ZhipuResponse, ZhipuErrorResponse } from '../types';
+import { ZhipuRequest, ZhipuResponse } from '../types';
 import { ApiError } from '../utils/error';
+import fs from 'fs';
+import path from 'path';
 
 class ZhipuService {
   private readonly apiKey?: string;
@@ -15,6 +17,7 @@ class ZhipuService {
   private readonly temperature: number;
   private readonly maxTokens: number;
   private readonly topP?: number;
+  private readonly promptTemplate: string;
 
   constructor() {
     this.apiKey = (process.env.AI_API_KEY || '').replace(/^"|"$/g, '');
@@ -32,9 +35,12 @@ class ZhipuService {
       ? timeoutEnv
       : (isDeepSeek ? 60000 : 30000);
     this.healthTimeout = Math.min(this.timeout, 10000);
-    this.temperature = (temperatureEnv !== undefined && Number.isFinite(temperatureEnv)) ? temperatureEnv : 0.8;
-    this.maxTokens = (maxTokensEnv !== undefined && Number.isFinite(maxTokensEnv)) ? maxTokensEnv : (isDeepSeek ? 1200 : 2000);
+    this.temperature = (temperatureEnv !== undefined && Number.isFinite(temperatureEnv)) ? temperatureEnv : 1.0;
+    this.maxTokens = (maxTokensEnv !== undefined && Number.isFinite(maxTokensEnv)) ? maxTokensEnv : (isDeepSeek ? 3000 : 4000);
     this.topP = (topPEnv !== undefined && Number.isFinite(topPEnv)) ? topPEnv : (isDeepSeek ? undefined : 0.9);
+
+    // 加载Prompt模板
+    this.promptTemplate = this.loadPromptTemplate();
 
     // 调试日志
     logger.info('AI服务配置', {
@@ -50,9 +56,72 @@ class ZhipuService {
   }
 
   /**
+   * 加载Prompt模板文件
+   */
+  private loadPromptTemplate(): string {
+    try {
+      const promptPath = path.join(__dirname, '../prompts/name-generation.prompt.md');
+      const template = fs.readFileSync(promptPath, 'utf-8');
+      logger.info('Prompt模板加载成功', { path: promptPath });
+      return template;
+    } catch (error) {
+      logger.error('Prompt模板加载失败，使用默认模板', { error });
+      // 返回默认模板作为fallback
+      return this.getDefaultPromptTemplate();
+    }
+  }
+
+  /**
+   * 默认Prompt模板（fallback）
+   */
+  private getDefaultPromptTemplate(): string {
+    return `角色设定：你是一位拥有20年经验的起名大师，精通周易五行、古诗词、现代美学、心理学（包括MBTI性格理论）。
+任务：根据用户提供的宝宝信息，生成{nameCount}个精选名字。要求：名字风格多样化，字数包含2个字和3个字的名字。
+输入信息：- 姓氏：{surname}
+- 性别：{gender}
+- 出生日期：{birthDate}
+- 出生时间：{birthTime}
+- 特殊要求：{requirements}
+
+起名标准：1. 寓意美好：名字要有积极的寓意和内涵
+2. 音律和谐：声调搭配，朗朗上口，无不良谐音
+3. 字形美观：结构匀称，书写流畅
+4. 文化底蕴：优先从诗词典故中取材
+5. 时代感：既要有传统底蕴，又要符合现代审美
+6. 避免生僻：使用GB2312常用字，方便生活
+7. 字数多样：{nameCount}个名字中，建议包含2-3个两字名和2-3个三字名
+8. 风格多样：包含古典诗词风、现代简约风、国学经典风、文艺清新风、寓意吉祥风等不同风格
+
+输出要求：严格按以下JSON格式输出，不要任何额外文字：
+
+{
+  "names": [
+    {
+      "id": "唯一标识符(uuid格式)",
+      "name": "名字（不含姓氏，可以是1-2个字）",
+      "full_name": "完整姓名",
+      "pinyin": "拼音标注",
+      "meaning": "详细寓意解释(100字以内)",
+      "cultural_source": "诗词典故出处(如有，没有则写'无')",
+      "wuxing_analysis": "五行分析(如提供出生时间)",
+      "score": 95,
+      "highlight": "最突出的亮点(一句话)",
+      "mbti_tendency": "根据名字的寓意和气质，分析可能对应的MBTI性格倾向(如：INFJ-内敛而富有洞察力，适合从事...)，约50字"
+    }
+  ]
+}
+
+注意事项：- 不要输出JSON以外的任何内容
+- 确保{nameCount}个名字风格各异，字数混合（2字名和3字名都要有），给用户更多选择
+- 评分要客观，90分以上为优质
+- 如果用户提供了特殊要求，必须优先满足
+- MBTI倾向参考需结合名字的寓意进行合理推测，体现名字赋予的性格气质`;
+  }
+
+  /**
    * 生成起名Prompt
    */
-  private buildPrompt(params: NameGenerationParams): string {
+  private buildPrompt(params: NameGenerationParams, nameCount: number = 5): string {
     const { surname, gender, birthDate, birthTime, requirements } = params;
 
     // 性别映射
@@ -62,60 +131,36 @@ class ZhipuService {
       unknown: '未知',
     };
 
-    let prompt = `角色设定：你是一位拥有20年经验的起名大师，精通周易五行、古诗词、现代美学。
-任务：根据用户提供的宝宝信息，生成5个精选名字。
-输入信息：- 姓氏：${surname}
-- 性别：${genderMap[gender] || gender}`;
+    // 使用模板替换变量
+    let prompt = this.promptTemplate
+      .replace(/{surname}/g, surname)
+      .replace(/{gender}/g, genderMap[gender] || gender)
+      .replace(/{nameCount}/g, nameCount.toString());
 
+    // 处理可选字段
     if (birthDate) {
-      prompt += `\n- 出生日期：${birthDate}`;
+      prompt = prompt.replace(/{birthDate}/g, birthDate);
+    } else {
+      prompt = prompt.replace(/- 出生日期：{birthDate}\n?/g, '');
     }
 
     if (birthTime) {
-      prompt += `\n- 出生时间：${birthTime}`;
+      prompt = prompt.replace(/{birthTime}/g, birthTime);
+    } else {
+      prompt = prompt.replace(/- 出生时间：{birthTime}\n?/g, '');
     }
 
     if (requirements) {
-      prompt += `\n- 特殊要求：${requirements}`;
+      prompt = prompt.replace(/{requirements}/g, requirements);
+    } else {
+      prompt = prompt.replace(/- 特殊要求：{requirements}\n?/g, '');
     }
-
-    prompt += `
-
-起名标准：1. 寓意美好：名字要有积极的寓意和内涵
-2. 音律和谐：声调搭配，朗朗上口，无不良谐音
-3. 字形美观：结构匀称，书写流畅
-4. 文化底蕴：优先从诗词典故中取材
-5. 时代感：既要有传统底蕴，又要符合现代审美
-6. 避免生僻：使用GB2312常用字，方便生活
-
-输出要求：严格按以下JSON格式输出，不要任何额外文字：
-
-{
-  "names": [
-    {
-      "id": "唯一标识符(uuid格式)",
-      "name": "名字（不含姓氏）",
-      "full_name": "完整姓名",
-      "pinyin": "拼音标注",
-      "meaning": "详细寓意解释(100字以内)",
-      "cultural_source": "诗词典故出处(如有，没有则写'无')",
-      "wuxing_analysis": "五行分析(如提供出生时间)",
-      "score": 95,
-      "highlight": "最突出的亮点(一句话)"
-    }
-  ]
-}
-
-注意事项：- 不要输出JSON以外的任何内容
-- 确保5个名字风格各异，给用户更多选择
-- 评分要客观，90分以上为优质
-- 如果用户提供了特殊要求，必须优先满足`;
 
     return prompt;
   }
 
   /**
-   * 调用智谱AI API生成名字
+   * 调用智谱AI API生成名字（并行双请求模式）
    */
   async generateNames(params: NameGenerationParams): Promise<NameResult[]> {
     const startTime = Date.now();
@@ -126,161 +171,186 @@ class ZhipuService {
     }
 
     try {
-      logger.info('调用智谱AI生成名字', { surname: params.surname, gender: params.gender });
+      logger.info('开始并行生成名字', { surname: params.surname, gender: params.gender });
 
-      // 构建请求
-      const request: ZhipuRequest = {
-        model: this.model,
-        messages: [
-          {
-            role: 'user',
-            content: this.buildPrompt(params),
-          },
-        ],
-        temperature: this.temperature,
-        max_tokens: this.maxTokens,
-      };
+      // 并行发起2个请求，每个生成3个名字
+      const batchSize = 3;
+      const promises = [
+        this.generateBatch(params, batchSize, 1),
+        this.generateBatch(params, batchSize, 2),
+      ];
 
-      if (typeof this.topP === 'number') {
-        request.top_p = this.topP;
-      }
+      const results = await Promise.allSettled(promises);
 
-      // 调用智谱AI API
-      const response = await axios.post<ZhipuResponse>(this.apiUrl, request, {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-        timeout: this.timeout,
-        signal: AbortSignal.timeout(this.timeout),
-        validateStatus: () => true,
-      });
+      // 处理并行请求结果
+      const successfulResults: NameResult[][] = [];
+      const errors: Error[] = [];
 
-      // 详细记录响应信息用于调试
-      logger.info('AI API响应详情', {
-        status: response.status,
-        statusText: response.statusText,
-        hasData: !!response.data,
-        hasChoices: !!response.data?.choices,
-        choicesLength: response.data?.choices?.length,
-      });
-
-      if (response.status >= 400) {
-        logger.error('AI API响应错误', {
-          status: response.status,
-          statusText: response.statusText,
-          data: response.data,
-        });
-        switch (response.status) {
-          case 401:
-            throw new ApiError('AI_AUTH_FAILED', 'AI服务认证失败，请检查API密钥配置', 503);
-          case 429:
-            throw new ApiError('AI_RATE_LIMIT', 'AI服务请求过于频繁，请稍后再试', 503);
-          case 500:
-          case 502:
-          case 503:
-            throw new ApiError('AI_SERVICE_ERROR', 'AI服务暂时不可用，请稍后再试', 503);
-          default:
-            throw new ApiError('AI_ERROR', `AI服务错误: ${response.statusText}`, 503);
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled') {
+          successfulResults.push(result.value);
+          logger.info(`并行请求 ${index + 1} 成功`, { count: result.value.length });
+        } else {
+          errors.push(result.reason);
+          logger.error(`并行请求 ${index + 1} 失败`, { error: result.reason });
         }
+      });
+
+      let allNames: NameResult[] = [];
+
+      if (successfulResults.length === 2) {
+        // 两个请求都成功：合并6个名字，去重后返回前5个
+        allNames = this.mergeAndDeduplicateNames(successfulResults[0], successfulResults[1]);
+        logger.info('两个并行请求都成功，合并结果', {
+          totalBeforeDedup: successfulResults[0].length + successfulResults[1].length,
+          totalAfterDedup: allNames.length,
+        });
+      } else if (successfulResults.length === 1) {
+        // 只有一个成功：用成功的3个，再串行生成2个补充
+        const existingNames = successfulResults[0];
+        logger.info('只有一个并行请求成功，补充生成剩余名字', {
+          existingCount: existingNames.length,
+          needMore: 2,
+        });
+
+        try {
+          const additionalNames = await this.generateBatch(params, 2, 3);
+          allNames = [...existingNames, ...additionalNames];
+          logger.info('补充生成成功', { additionalCount: additionalNames.length });
+        } catch (error) {
+          // 补充生成失败，返回已有的3个名字
+          logger.warn('补充生成失败，返回已有结果', { error });
+          allNames = existingNames;
+        }
+      } else {
+        // 两个都失败：抛出错误
+        const firstError = errors[0];
+        logger.error('两个并行请求都失败', { errors: errors.map(e => e.message) });
+        throw firstError;
       }
+
+      // 确保返回5个名字（如果不足5个，保持现有）
+      const finalNames = allNames.slice(0, 5);
 
       const elapsedTime = Date.now() - startTime;
-      logger.info('智谱AI调用成功', { elapsedTime: `${elapsedTime}ms` });
-
-      // 解析响应
-      const content = response.data.choices[0]?.message?.content;
-      if (!content) {
-        logger.error('AI返回内容为空', {
-          responseData: response.data,
-          choices: response.data.choices,
-        });
-        throw new ApiError('AI_EMPTY_RESPONSE', 'AI返回内容为空，请重试', 503);
-      }
-
-      logger.info('AI返回内容预览', {
-        contentLength: content.length,
-        contentPreview: content.substring(0, 100),
+      logger.info('并行生成名字完成', {
+        elapsedTime: `${elapsedTime}ms`,
+        finalCount: finalNames.length,
       });
 
-      // 解析JSON结果
-      const names = this.parseAIResponse(content);
-
-      return names;
+      return finalNames;
     } catch (error) {
       const elapsedTime = Date.now() - startTime;
-
-      // 输出完整错误对象以便诊断
-      logger.error('智谱AI调用失败 - 完整错误信息', {
-        errorName: error instanceof Error ? error.name : 'Unknown',
-        errorMessage: error instanceof Error ? error.message : String(error),
-        errorStack: error instanceof Error ? error.stack : undefined,
-        elapsedTime: `${elapsedTime}ms`,
-      });
-
-      if (axios.isAxiosError(error)) {
-        const axiosError = error as AxiosError<ZhipuErrorResponse>;
-
-        // 输出详细的Axios错误信息
-        logger.error('Axios错误详情', {
-          message: axiosError.message,
-          code: axiosError.code,
-          status: axiosError.response?.status,
-          statusText: axiosError.response?.statusText,
-          responseData: axiosError.response?.data,
-          requestUrl: axiosError.config?.url,
-          requestMethod: axiosError.config?.method,
-          timeout: axiosError.config?.timeout,
-        });
-
-        // 处理API错误
-        if (axiosError.response) {
-          const { status, data } = axiosError.response;
-          logger.error('API响应错误', { status, data });
-
-          switch (status) {
-            case 401:
-              throw new ApiError('AI_AUTH_FAILED', 'AI服务认证失败，请检查API密钥配置', 503);
-            case 429:
-              throw new ApiError('AI_RATE_LIMIT', 'AI服务请求过于频繁，请稍后再试', 503);
-            case 500:
-            case 502:
-            case 503:
-              throw new ApiError('AI_SERVICE_ERROR', 'AI服务暂时不可用，请稍后再试', 503);
-            default:
-              throw new ApiError('AI_ERROR', data?.error?.message || 'AI服务错误', 503);
-          }
-        }
-
-        // 处理超时
-        if (axiosError.code === 'ECONNABORTED' || axiosError.code === 'ERR_CANCELED') {
-          logger.error('请求超时详情', {
-            timeout: this.timeout,
-            elapsedTime: `${elapsedTime}ms`,
-            message: '请求在指定时间内未完成',
-          });
-          throw new ApiError('AI_TIMEOUT', 'AI服务响应超时，请重试', 503);
-        }
-
-        // 处理网络错误
-        if (axiosError.code === 'ECONNREFUSED' || axiosError.code === 'ENOTFOUND') {
-          logger.error('网络连接错误详情', {
-            code: axiosError.code,
-            url: this.apiUrl,
-            message: '无法连接到API服务器',
-          });
-          throw new ApiError('AI_NETWORK_ERROR', 'AI服务网络连接失败，请检查网络', 503);
-        }
-      }
-
-      throw new ApiError('AI_UNKNOWN_ERROR', error instanceof Error ? error.message : 'AI服务异常', 503);
+      logger.error('并行生成名字失败', { error, elapsedTime: `${elapsedTime}ms` });
+      throw error;
     }
+  }
+
+  /**
+   * 生成一批名字
+   */
+  private async generateBatch(
+    params: NameGenerationParams,
+    count: number,
+    batchId: number
+  ): Promise<NameResult[]> {
+    const batchStartTime = Date.now();
+
+    logger.info(`开始生成第 ${batchId} 批名字`, { count });
+
+    // 构建请求
+    const request: ZhipuRequest = {
+      model: this.model,
+      messages: [
+        {
+          role: 'user',
+          content: this.buildPrompt(params, count),
+        },
+      ],
+      temperature: this.temperature,
+      max_tokens: this.maxTokens,
+    };
+
+    if (typeof this.topP === 'number') {
+      request.top_p = this.topP;
+    }
+
+    // 调用智谱AI API
+    const response = await axios.post<ZhipuResponse>(this.apiUrl, request, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${this.apiKey}`,
+      },
+      timeout: this.timeout,
+      signal: AbortSignal.timeout(this.timeout),
+      validateStatus: () => true,
+      proxy: false,
+    });
+
+    if (response.status >= 400) {
+      logger.error(`第 ${batchId} 批AI API响应错误`, {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data,
+      });
+      switch (response.status) {
+        case 401:
+          throw new ApiError('AI_AUTH_FAILED', 'AI服务认证失败，请检查API密钥配置', 503);
+        case 429:
+          throw new ApiError('AI_RATE_LIMIT', 'AI服务请求过于频繁，请稍后再试', 503);
+        case 500:
+        case 502:
+        case 503:
+          throw new ApiError('AI_SERVICE_ERROR', 'AI服务暂时不可用，请稍后再试', 503);
+        default:
+          throw new ApiError('AI_ERROR', `AI服务错误: ${response.statusText}`, 503);
+      }
+    }
+
+    // 解析响应
+    const content = response.data.choices[0]?.message?.content;
+    if (!content) {
+      logger.error(`第 ${batchId} 批AI返回内容为空`, {
+        responseData: response.data,
+        choices: response.data.choices,
+      });
+      throw new ApiError('AI_EMPTY_RESPONSE', 'AI返回内容为空，请重试', 503);
+    }
+
+    // 解析JSON结果
+    const names = this.parseAIResponse(content, count);
+
+    const elapsedTime = Date.now() - batchStartTime;
+    logger.info(`第 ${batchId} 批名字生成成功`, { elapsedTime: `${elapsedTime}ms`, count: names.length });
+
+    return names;
+  }
+
+  /**
+   * 合并并去重名字列表
+   */
+  private mergeAndDeduplicateNames(batch1: NameResult[], batch2: NameResult[]): NameResult[] {
+    const merged = [...batch1, ...batch2];
+
+    // 按 full_name 去重
+    const seen = new Set<string>();
+    const unique: NameResult[] = [];
+
+    for (const name of merged) {
+      const key = name.full_name;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(name);
+      }
+    }
+
+    return unique;
   }
 
   /**
    * 解析AI返回的JSON响应
    */
-  private parseAIResponse(content: string): NameResult[] {
+  private parseAIResponse(content: string, expectedCount?: number): NameResult[] {
     try {
       // 尝试提取JSON（去除可能的markdown代码块标记）
       let jsonContent = content.trim();
@@ -306,8 +376,8 @@ class ZhipuService {
         throw new Error('AI返回数据格式错误：缺少names字段');
       }
 
-      if (result.names.length !== 5) {
-        logger.warn('AI返回名字数量不是5个', { count: result.names.length });
+      if (expectedCount && result.names.length !== expectedCount) {
+        logger.warn('AI返回名字数量与预期不符', { expected: expectedCount, actual: result.names.length });
       }
 
       // 验证每个名字的字段
@@ -357,6 +427,7 @@ class ZhipuService {
         timeout: this.healthTimeout,
         signal: AbortSignal.timeout(this.healthTimeout),
         validateStatus: () => true,
+        proxy: false,
       });
 
       return response.status >= 200 && response.status < 500;

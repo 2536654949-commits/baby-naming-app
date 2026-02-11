@@ -40,6 +40,8 @@ export interface NameResult {
   score: number;
   /** 最突出的亮点 */
   highlight: string;
+  /** MBTI倾向参考 */
+  mbti_tendency?: string;
 }
 
 /**

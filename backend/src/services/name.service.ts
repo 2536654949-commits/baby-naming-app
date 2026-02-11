@@ -111,15 +111,12 @@ class NameService {
       });
 
       // 转换为前端需要的格式
+      // 注意：列表只返回基本信息，不返回完整的名字列表（减少数据传输）
       const historyRecords: HistoryRecord[] = records.map((record: any) => {
         const babyInfo = record.babyInfo as any;
-        const aiResult = record.aiResult as any;
 
         // 格式化日期
         const date = new Date(record.createdAt).toISOString().split('T')[0];
-
-        // 提取名字列表（保留完整的 NameResult 对象）
-        const names = aiResult.names || [];
 
         return {
           id: record.id.toString(),
@@ -130,7 +127,7 @@ class NameService {
           birthDate: babyInfo.birthDate,
           birthTime: babyInfo.birthTime,
           requirements: babyInfo.requirements,
-          names,
+          names: [], // 列表不返回名字数据，点击查看详情时通过getHistoryDetail获取
           createdAt: record.createdAt.toISOString(),
         };
       });

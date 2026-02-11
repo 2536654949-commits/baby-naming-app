@@ -1,45 +1,223 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { NameResult } from '@/src/services/name.service';
+import { NameResult, generateName, NameInputParams } from '@/src/services/name.service';
 
 const LoadingPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [progress, setProgress] = useState(0);
+  const progressRef = useRef(0);
   const [statusText, setStatusText] = useState("正在分析姓氏特点...");
   const [names, setNames] = useState<NameResult[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const hasGenerated = useRef(false);
+  const apiCompletedRef = useRef(false);
+  const progressTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // 从 location.state 获取真实 AI 结果
-    if (location.state?.names) {
-      setNames(location.state.names);
-      // 模拟进度条
-      const timer = setInterval(() => {
-        setProgress((prev) => {
-          if (prev >= 100) {
-            clearInterval(timer);
-            setTimeout(() => {
-              navigate('/results', { state: { names } });
-            }, 500);
-            return 100;
+    const babyInfo: NameInputParams | undefined = location.state?.babyInfo;
+    const isGenerating = location.state?.isGenerating;
+    const existingNames = location.state?.names;
+
+    // 如果没有 babyInfo，返回输入页
+    if (!babyInfo) {
+      console.error('没有宝宝信息');
+      navigate('/input');
+      return;
+    }
+
+    // 如果已经有结果（直接传入的），直接播放动画
+    if (existingNames && !isGenerating) {
+      setNames(existingNames);
+      setIsLoading(false);
+      startProgressAnimation();
+      // 3秒后跳转
+      setTimeout(() => {
+        completeProgressAndNavigate(existingNames);
+      }, 3000);
+      return;
+    }
+
+    // 需要执行 API 请求生成名字
+    if (isGenerating && !hasGenerated.current) {
+      hasGenerated.current = true;
+      generateNamesAndAnimate(babyInfo);
+    }
+  }, [location.state, navigate]);
+
+  // 生成名字并开始动画（并行执行）
+  const generateNamesAndAnimate = async (babyInfo: NameInputParams) => {
+    try {
+      setIsLoading(true);
+
+      // 同时启动进度条动画和API请求
+      const progressPromise = startProgressAnimation();
+      const apiPromise = generateName(babyInfo);
+
+      // 等待API请求完成
+      const response = await apiPromise;
+
+      if (response.success && response.data) {
+        const generatedNames = response.data.names;
+        setNames(generatedNames);
+        apiCompletedRef.current = true;
+
+        // 等待进度条到达95%以上再完成
+        await waitForProgressToComplete();
+
+        // 快速完成最后进度并跳转
+        completeProgressAndNavigate(generatedNames, babyInfo);
+      } else {
+        throw new Error('生成失败');
+      }
+    } catch (err: any) {
+      // 清理进度条定时器
+      if (progressTimerRef.current) {
+        clearInterval(progressTimerRef.current);
+      }
+      handleError(err);
+    }
+  };
+
+  // 等待进度条到达合适位置
+  const waitForProgressToComplete = async () => {
+    return new Promise<void>((resolve) => {
+      const checkProgress = () => {
+        // 使用ref获取最新进度，避免闭包问题
+        const currentProgress = progressRef.current;
+        // 如果进度已经到95%以上，就继续
+        if (currentProgress >= 95) {
+          resolve();
+        } else {
+          // 否则等待一下再检查
+          setTimeout(checkProgress, 100);
+        }
+      };
+      checkProgress();
+    });
+  };
+
+  // 完成进度并跳转
+  const completeProgressAndNavigate = (nameList: NameResult[], babyInfo?: NameInputParams) => {
+    // 快速完成到100%
+    setProgress(100);
+    setStatusText("生成完成！");
+
+    setTimeout(() => {
+      navigate('/results', {
+        state: {
+          names: nameList,
+          babyInfo: babyInfo || location.state?.babyInfo
+        }
+      });
+    }, 500);
+  };
+
+  // 处理错误
+  const handleError = (err: any) => {
+    if (err.response?.status === 429) {
+      const waitSeconds = err.response?.data?.error?.waitSeconds;
+      setError(`请求过于频繁，请等待${waitSeconds}秒后再试`);
+    } else if (err.response?.status === 401) {
+      navigate('/activation', { replace: true });
+      return;
+    } else {
+      const errorMsg = err.response?.data?.error?.message;
+      setError(errorMsg || '生成失败，请重试');
+    }
+    setIsLoading(false);
+  };
+
+  // 开始进度条动画（与API并行）
+  const startProgressAnimation = () => {
+    // 每300ms增加1%，约30秒到达100%
+    progressTimerRef.current = setInterval(() => {
+      setProgress((prev) => {
+        const newProgress = (() => {
+          // 如果API已完成，快速完成剩余进度
+          if (apiCompletedRef.current) {
+            if (progressTimerRef.current) {
+              clearInterval(progressTimerRef.current);
+            }
+            return prev;
           }
 
-          // Update text based on progress
-          if (prev === 30) setStatusText("正在查阅诗词典故...");
-          if (prev === 70) setStatusText("正在筛选最佳组合...");
-          if (prev === 90) setStatusText("AI 正在深度计算中...");
+          // 最多到95%，等待API完成后再到100%
+          if (prev >= 95) {
+            if (progressTimerRef.current) {
+              clearInterval(progressTimerRef.current);
+            }
+            return 95;
+          }
+
+          // 根据进度更新状态文本
+          if (prev === 20) setStatusText("正在查阅诗词典故...");
+          if (prev === 50) setStatusText("正在筛选最佳组合...");
+          if (prev === 80) setStatusText("AI 正在深度计算中...");
 
           return prev + 1;
-        });
-      }, 40); // Approx 4 seconds total
+        })();
 
-      return () => clearInterval(timer);
-    } else {
-      // 没有结果，返回输入页
-      console.error('没有起名结果');
-      navigate('/input');
+        // 同步更新ref以保持最新值
+        progressRef.current = newProgress;
+        return newProgress;
+      });
+    }, 300); // 300ms * 100 = 30秒
+  };
+
+  // 重试
+  const handleRetry = () => {
+    setError('');
+    setProgress(0);
+    setStatusText("正在分析姓氏特点...");
+    hasGenerated.current = false;
+    const babyInfo = location.state?.babyInfo;
+    if (babyInfo) {
+      generateNamesAndAnimate(babyInfo);
     }
-  }, [location.state, navigate, names]);
+  };
+
+  // 返回输入页
+  const handleBack = () => {
+    navigate('/input');
+  };
+
+  // 错误状态 UI
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#FFF9F6] to-[#FFE4E9] px-6">
+        <div className="relative flex items-center justify-center mb-8">
+          <div className="relative z-10 w-40 h-40 flex items-center justify-center bg-white rounded-full shadow-2xl border-4 border-white overflow-hidden">
+            <span className="material-symbols-outlined text-6xl text-red-400">error_outline</span>
+          </div>
+        </div>
+
+        <h2 className="mb-4 text-center text-xl font-bold tracking-tight text-[#4E342E]">
+          生成失败
+        </h2>
+
+        <div className="mb-8 p-4 rounded-xl bg-red-50 border border-red-100 max-w-[300px]">
+          <p className="text-sm text-red-600 text-center">{error}</p>
+        </div>
+
+        <div className="flex flex-col gap-3 w-full max-w-[280px]">
+          <button
+            onClick={handleRetry}
+            className="w-full bg-primary hover:bg-pink-600 text-white font-bold h-12 rounded-xl shadow-glow transition-all active:scale-95"
+          >
+            重试
+          </button>
+          <button
+            onClick={handleBack}
+            className="w-full bg-white hover:bg-gray-50 text-slate-700 font-bold h-12 rounded-xl border border-gray-200 transition-all active:scale-95"
+          >
+            返回修改
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#FFF9F6] to-[#FFE4E9] px-6">
@@ -98,11 +276,15 @@ const LoadingPage: React.FC = () => {
 
       {/* Info Boxes */}
       <div className="flex flex-col items-center gap-4 w-full max-w-[280px]">
-        <div className="flex items-center justify-center w-full px-4 py-3 rounded-xl bg-white border border-primary/20 shadow-sm">
-           <span className="text-sm text-[#5D4037] font-bold">正在查阅诗词典故...</span>
+        <div className={`flex items-center justify-center w-full px-4 py-3 rounded-xl border shadow-sm ${progress < 20 ? 'bg-white/40 border-primary/10' : 'bg-white border-primary/20'}`}>
+           <span className={`text-sm font-bold ${progress < 20 ? 'text-[#A1887F]' : 'text-[#5D4037]'}`}>
+             {progress < 20 ? '正在初始化...' : '正在查阅诗词典故...'}
+           </span>
         </div>
-        <div className="flex items-center justify-center w-full px-4 py-3 rounded-xl bg-white/40">
-           <span className="text-sm text-[#A1887F] font-medium">正在筛选最佳组合...</span>
+        <div className={`flex items-center justify-center w-full px-4 py-3 rounded-xl ${progress < 50 ? 'bg-white/20' : 'bg-white/40'}`}>
+           <span className={`text-sm font-medium ${progress < 50 ? 'text-[#A1887F]/50' : 'text-[#A1887F]'}`}>
+             正在筛选最佳组合...
+           </span>
         </div>
       </div>
 

@@ -1,15 +1,33 @@
 ﻿import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { NameResult } from '@/src/services/name.service';
+import { NameResult, NameInputParams } from '@/src/services/name.service';
 
 const ResultsPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const names: NameResult[] = location.state?.names || [];
+  const babyInfo: NameInputParams | undefined = location.state?.babyInfo;
 
   // 处理卡片点击，跳转到详情页
   const handleCardClick = (name: NameResult) => {
     navigate(`/detail/${name.id}`, { state: { name } });
+  };
+
+  // 处理"再来一组"点击
+  const handleRegenerate = async () => {
+    // 如果没有保存的 babyInfo，则跳转到输入页面
+    if (!babyInfo) {
+      navigate('/input');
+      return;
+    }
+
+    // 立即跳转到loading页面，在loading页面执行API请求
+    navigate('/loading', {
+      state: {
+        babyInfo: babyInfo,
+        isGenerating: true
+      }
+    });
   };
 
   // 如果没有名字数据，显示空状态
@@ -107,7 +125,7 @@ const ResultsPage: React.FC = () => {
 
       <div className="fixed bottom-0 w-full max-w-md bg-gradient-to-t from-background-light via-background-light to-transparent p-6 pb-10 z-30 pointer-events-none">
         <button
-          onClick={() => navigate('/input')}
+          onClick={handleRegenerate}
           className="w-full pointer-events-auto bg-primary hover:bg-pink-600 text-white font-bold h-14 rounded-2xl flex items-center justify-center gap-2 shadow-glow hover:shadow-pink-500/40 transition-all duration-300 active:scale-[0.96]"
         >
           <span className="material-symbols-outlined text-[22px]">refresh</span>

@@ -10,16 +10,43 @@ const FavoritesPage: React.FC = () => {
   const [filter, setFilter] = useState<'all' | 'high' | 'new'>('all');
   const [error, setError] = useState('');
 
+  // 缓存所有收藏数据，避免切换筛选时重复请求
+  const [allFavorites, setAllFavorites] = useState<any[]>([]);
+
   useEffect(() => {
     fetchFavorites();
-  }, [filter]);
+  }, []);
+
+  // 当筛选条件变化时，在前端进行过滤
+  useEffect(() => {
+    if (allFavorites.length === 0) return;
+
+    let filtered = allFavorites;
+    switch (filter) {
+      case 'high':
+        // 高分推荐：评分 >= 96
+        filtered = allFavorites.filter(item => item.nameData?.score >= 96);
+        break;
+      case 'new':
+        // 最新添加：按创建时间倒序（数据已经按时间排序）
+        filtered = [...allFavorites];
+        break;
+      case 'all':
+      default:
+        filtered = allFavorites;
+        break;
+    }
+    setFavorites(filtered);
+  }, [filter, allFavorites]);
 
   const fetchFavorites = async () => {
     setLoading(true);
     setError('');
     try {
-      const response = await getFavorites(filter);
+      // 首次加载获取全部数据，后续切换筛选在前端过滤
+      const response = await getFavorites('all');
       if (response.success && response.data) {
+        setAllFavorites(response.data.favorites);
         setFavorites(response.data.favorites);
       }
     } catch (err: any) {
@@ -97,7 +124,7 @@ const FavoritesPage: React.FC = () => {
              onClick={() => setFilter('all')}
              className={`px-4 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === 'all' ? 'bg-primary text-white shadow-sm' : 'bg-white text-gray-600 border border-gray-100'}`}
            >
-             全部 ({favorites.length})
+             全部 ({allFavorites.length})
            </button>
            <button
              onClick={() => setFilter('high')}

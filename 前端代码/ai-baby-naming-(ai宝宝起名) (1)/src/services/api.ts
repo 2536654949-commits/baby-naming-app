@@ -10,9 +10,8 @@ export type { ApiResponse, ApiError };
 
 const rawBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 const normalizedBaseUrl = rawBaseUrl ? rawBaseUrl.replace(/\/+$/, '') : '';
-const baseURL = rawBaseUrl
-  ? (normalizedBaseUrl.endsWith('/api') ? normalizedBaseUrl : `${normalizedBaseUrl}/api`)
-  : '/api';
+// 如果配置已经以 /api 结尾，直接使用，避免重复添加
+const baseURL = normalizedBaseUrl || '/api';
 
 const apiInstance: AxiosInstance = axios.create({
   baseURL,

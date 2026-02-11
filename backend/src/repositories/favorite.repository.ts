@@ -56,38 +56,27 @@ class FavoriteRepository {
   async findByUserId(options: FavoriteQueryOptions): Promise<{ items: FavoriteItem[]; total: number }> {
     const { userId, filter = 'all', limit = 100, offset = 0 } = options;
 
-    // 根据筛选条件添加过滤
-    const orderBy: any = { createdAt: 'desc' };
+    // 构建查询条件 - 在数据库层面进行筛选
+    const where: any = { userId };
 
-    // 先获取所有数据，然后在内存中筛选（因为Prisma JSON查询语法复杂）
-    const allItems = await prisma.favorite.findMany({
-      where: { userId },
-      orderBy,
-    });
-
-    // 根据 filter 在内存中筛选
-    let filteredItems = allItems;
-
-    switch (filter) {
-      case 'high':
-        // 高分推荐：评分 >= 96
-        filteredItems = allItems.filter(item => {
-          const nameData = item.nameData as any;
-          return nameData && typeof nameData.score === 'number' && nameData.score >= FavoriteRepository.HIGH_SCORE_THRESHOLD;
-        });
-        break;
-      case 'new':
-        // 最新添加：按创建时间倒序（已经排序）
-        break;
-      case 'all':
-      default:
-        // 全部：按创建时间倒序（已经排序）
-        break;
+    // 高分筛选：使用Prisma的JSON过滤功能在数据库层面筛选
+    if (filter === 'high') {
+      where.nameData = {
+        path: ['score'],
+        gte: FavoriteRepository.HIGH_SCORE_THRESHOLD
+      };
     }
 
-    // 应用分页
-    const items = filteredItems.slice(offset, offset + limit);
-    const total = filteredItems.length;
+    // 并行执行查询和计数，提高效率
+    const [items, total] = await Promise.all([
+      prisma.favorite.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: offset,
+      }),
+      prisma.favorite.count({ where })
+    ]);
 
     // 转换类型，并将 BigInt 转为字符串
     const typedItems: FavoriteItem[] = items.map(item => ({

@@ -50,6 +50,7 @@ export interface NameResult {
   wuxing_analysis: string;
   score: number;
   highlight: string;
+  mbti_tendency?: string;
   three_scores?: {
     rhythm: number;
     culture: number;

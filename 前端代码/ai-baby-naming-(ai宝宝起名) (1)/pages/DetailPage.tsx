@@ -104,13 +104,7 @@ const DetailPage: React.FC = () => {
             <h1 className="font-serif text-6xl font-bold text-slate-900 mb-2 tracking-[0.2em] leading-normal drop-shadow-sm">
                 {name.full_name}
             </h1>
-            <div className="flex flex-col items-center gap-1">
-              <p className="text-primary text-xl font-medium tracking-wide">{name.pinyin}</p>
-              <button className="mt-2 flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 transition-colors">
-                <span className="material-symbols-outlined text-primary text-[18px]">volume_up</span>
-                <span className="text-primary text-xs font-semibold tracking-wider">播放读音</span>
-              </button>
-            </div>
+            <p className="text-primary text-xl font-medium tracking-wide">{name.pinyin}</p>
           </div>
           <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent rounded-b-[3rem] -z-0 top-[-80px]"></div>
         </div>
@@ -192,7 +186,7 @@ const DetailPage: React.FC = () => {
           </div>
         )}
 
-        <div className="px-4 py-2 pb-8">
+        <div className="px-4 py-2">
            <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
                 <span className="text-[18px]">✨</span>
                 亮点说明
@@ -201,6 +195,20 @@ const DetailPage: React.FC = () => {
               <p className="text-sm text-gray-700 leading-relaxed">{name.highlight}</p>
            </div>
         </div>
+
+        {name.mbti_tendency && (
+          <div className="px-4 py-2 pb-8">
+            <h3 className="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+              <span className="text-[18px]">🧠</span>
+              MBTI倾向参考
+            </h3>
+            <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm">
+              <p className="text-sm text-gray-700 leading-relaxed">{name.mbti_tendency}</p>
+            </div>
+          </div>
+        )}
+
+        {!name.mbti_tendency && <div className="pb-4"></div>}
 
         {message && (
           <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in">

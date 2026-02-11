@@ -13,7 +13,11 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "prisma:reset": "prisma migrate reset",
-    "codes:generate": "ts-node scripts/generate-codes.ts"
+    "codes:generate": "ts-node scripts/generate-codes.ts",
+    "logs:tail": "powershell -Command \"Get-Content logs/combined*.log -Wait -Tail 50\"",
+    "logs:error": "powershell -Command \"Get-Content logs/error*.log -Wait -Tail 50\"",
+    "logs:list": "powershell -Command \"Get-ChildItem logs/ | Format-Table Name, Length, LastWriteTime\"",
+    "logs:clear": "powershell -Command \"Remove-Item logs/*.log, logs/*.gz -Force -ErrorAction SilentlyContinue; Write-Host 'Logs cleared'\""
   },
   "keywords": ["baby-name", "ai", "authentication"],
   "author": "",

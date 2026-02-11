@@ -42,6 +42,7 @@ class UsageRepository {
 
   /**
    * 根据用户ID查询历史记录
+   * 优化：只选择列表需要的字段，减少数据传输
    */
   async findByUserId(options: UsageRecordQueryOptions) {
     const { userId, limit = 100, offset = 0 } = options;
@@ -52,6 +53,14 @@ class UsageRepository {
         orderBy: { createdAt: 'desc' },
         take: limit,
         skip: offset,
+        // 只选择列表展示需要的字段，排除大的JSON字段aiResult
+        select: {
+          id: true,
+          userId: true,
+          babyInfo: true,
+          createdAt: true,
+          // 不选择 aiResult，减少数据传输
+        },
       }),
       prisma.usageRecord.count({
         where: { userId },

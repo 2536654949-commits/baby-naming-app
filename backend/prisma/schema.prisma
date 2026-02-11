@@ -52,6 +52,7 @@ model UsageRecord {
   @@index([userId])
   @@index([deviceId])
   @@index([createdAt])
+  @@index([userId, createdAt]) // 复合索引：优化用户历史记录查询
   @@map("usage_record")
 }
 
@@ -67,6 +68,7 @@ model Favorite {
   @@unique([userId, nameId], name: "user_name_unique") // 防止重复收藏
   @@index([userId])
   @@index([createdAt])
+  @@index([userId, createdAt]) // 复合索引：优化用户收藏查询
   @@map("favorites")
 }
 
