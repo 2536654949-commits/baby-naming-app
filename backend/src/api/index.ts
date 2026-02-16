@@ -4,7 +4,7 @@
  */
 
 import 'dotenv/config';
-import { createApp } from '../src/app';
+import { createApp } from '../app';
 
 // 创建Express应用实例
 const app = createApp();
