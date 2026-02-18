@@ -105,8 +105,8 @@ const ActivationPage: React.FC = () => {
              <span className="material-symbols-outlined text-[32px] text-primary">baby_changing_station</span>
           </div>
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">AI宝宝起名</h2>
-            <p className="mt-1 text-sm font-medium text-[#9a5f4c]">智能起名 · 寓意深远</p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900">大师起名</h2>
+            <p className="mt-1 text-sm font-medium text-[#9a5f4c]">千万名字库 · 寓意深远</p>
           </div>
         </div>
 

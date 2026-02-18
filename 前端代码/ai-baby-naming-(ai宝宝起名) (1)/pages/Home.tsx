@@ -20,7 +20,7 @@ const Home: React.FC = () => {
         <div className="flex items-center gap-2">
            <span className="material-symbols-outlined text-primary text-3xl filled-icon">child_care</span>
         </div>
-        <h1 className="text-lg font-bold tracking-tight text-center flex-1">智能起名 · 寓意深远</h1>
+        <h1 className="text-lg font-bold tracking-tight text-center flex-1">大师起名 · 寓意深远</h1>
         <div className="w-10"></div>
       </nav>
 
@@ -37,10 +37,10 @@ const Home: React.FC = () => {
                 <div className="bg-primary text-white w-10 h-10 rounded-full flex items-center justify-center">
                   <span className="material-symbols-outlined text-2xl">auto_awesome</span>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900">开始 AI 起名</h3>
+                <h3 className="text-2xl font-bold text-slate-900">开始大师起名</h3>
               </div>
               <p className="text-pink-800/70 text-sm mb-6 leading-relaxed">
-                基于国学大数据与现代AI深度学习，结合生辰八字为您定制万中选一的高分好名。
+                汇聚20年起名大师心血，1000万高分名字库精选，结合生辰八字为您甄选万中选一的好名。
               </p>
               <button 
                 onClick={handleStartNaming}
@@ -60,7 +60,7 @@ const Home: React.FC = () => {
               
               {[
                 { icon: 'edit_note', title: '1. 输入信息', desc: '填写宝宝生辰资料' },
-                { icon: 'psychology', title: '2. AI分析', desc: '深度学习精准匹配' },
+                { icon: 'psychology', title: '2. 大师甄选', desc: '千万库精准匹配' },
                 { icon: 'verified_user', title: '3. 获取佳名', desc: '筛选满意的高分名字' },
               ].map((step, idx) => (
                 <div key={idx} className="relative z-10 flex flex-col items-center w-1/3">
@@ -77,7 +77,7 @@ const Home: React.FC = () => {
           <div className="text-center pb-6 flex flex-col items-center">
             <p className="text-pink-900/40 text-xs leading-relaxed">
                 当前授权：一客一码付费版<br/>
-                由高端AI算法模型提供技术支持
+                由资深起名专家团队提供专业支持
             </p>
           </div>
         </div>

@@ -7,7 +7,7 @@ const LoadingPage: React.FC = () => {
   const location = useLocation();
   const [progress, setProgress] = useState(0);
   const progressRef = useRef(0);
-  const [statusText, setStatusText] = useState("正在分析姓氏特点...");
+  const [statusText, setStatusText] = useState("正在分析姓氏渊源...");
   const [names, setNames] = useState<NameResult[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -152,9 +152,9 @@ const LoadingPage: React.FC = () => {
           }
 
           // 根据进度更新状态文本
-          if (prev === 20) setStatusText("正在查阅诗词典故...");
-          if (prev === 50) setStatusText("正在筛选最佳组合...");
-          if (prev === 80) setStatusText("AI 正在深度计算中...");
+          if (prev === 20) setStatusText("正在查阅典籍出处...");
+          if (prev === 50) setStatusText("正在筛选大师精选...");
+          if (prev === 80) setStatusText("正在匹配千万名字库...");
 
           return prev + 1;
         })();
@@ -170,7 +170,7 @@ const LoadingPage: React.FC = () => {
   const handleRetry = () => {
     setError('');
     setProgress(0);
-    setStatusText("正在分析姓氏特点...");
+    setStatusText("正在分析姓氏渊源...");
     hasGenerated.current = false;
     const babyInfo = location.state?.babyInfo;
     if (babyInfo) {
@@ -247,7 +247,7 @@ const LoadingPage: React.FC = () => {
       </div>
 
       <h2 className="mb-10 text-center text-2xl font-bold tracking-tight text-[#4E342E]">
-        AI正在为您精心起名...
+        大师正在为您甄选佳名...
       </h2>
 
       {/* Dynamic Status Tag */}
@@ -278,7 +278,7 @@ const LoadingPage: React.FC = () => {
       <div className="flex flex-col items-center gap-4 w-full max-w-[280px]">
         <div className={`flex items-center justify-center w-full px-4 py-3 rounded-xl border shadow-sm ${progress < 20 ? 'bg-white/40 border-primary/10' : 'bg-white border-primary/20'}`}>
            <span className={`text-sm font-bold ${progress < 20 ? 'text-[#A1887F]' : 'text-[#5D4037]'}`}>
-             {progress < 20 ? '正在初始化...' : '正在查阅诗词典故...'}
+             {progress < 20 ? '正在初始化...' : '正在查阅典籍出处...'}
            </span>
         </div>
         <div className={`flex items-center justify-center w-full px-4 py-3 rounded-xl ${progress < 50 ? 'bg-white/20' : 'bg-white/40'}`}>
@@ -293,7 +293,7 @@ const LoadingPage: React.FC = () => {
         <div className="inline-block px-8 py-5 rounded-3xl bg-white/80 shadow-lg border border-white">
           <p className="text-[15px] text-[#6D4C41] leading-relaxed font-semibold">
             温馨提示：为了呈现最佳寓意<br/>
-            <span className="text-primary">AI 正在深度计算中</span>，好名字值得片刻等待
+            <span className="text-primary">大师正在千万名字库中甄选</span>，好名字值得片刻等待
           </p>
         </div>
       </div>

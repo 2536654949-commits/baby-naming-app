@@ -63,7 +63,7 @@ const InputPage: React.FC = () => {
         <div className="px-6 pt-6 pb-2">
           <h1 className="text-2xl font-bold text-slate-900 leading-tight">为您的宝宝开启好名字</h1>
           <p className="text-slate-500 text-sm mt-2 leading-relaxed">
-            请输入宝宝的详细信息，我们的AI将为您推荐蕴含文化底蕴的高分名字。
+            请输入宝宝的详细信息，大师将根据您的要求从千万名字库中精选蕴含文化底蕴的高分名字。
           </p>
         </div>
 
