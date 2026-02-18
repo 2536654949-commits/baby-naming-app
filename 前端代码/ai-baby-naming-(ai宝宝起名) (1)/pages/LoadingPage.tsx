@@ -86,8 +86,13 @@ const LoadingPage: React.FC = () => {
       const checkProgress = () => {
         // 使用ref获取最新进度，避免闭包问题
         const currentProgress = progressRef.current;
-        // 如果进度已经到95%以上，就继续
+        // 如果进度已经到95%以上，或者API已完成但进度不够，直接继续
         if (currentProgress >= 95) {
+          resolve();
+        } else if (apiCompletedRef.current) {
+          // API已完成但进度还没到95%，快速推进到95%
+          setProgress(95);
+          progressRef.current = 95;
           resolve();
         } else {
           // 否则等待一下再检查
