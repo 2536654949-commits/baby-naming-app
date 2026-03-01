@@ -47,6 +47,307 @@
       .filled-icon {
         font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
       }
+
+      /* ==================== 首次加载过渡页样式 ==================== */
+      .loading-screen {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(180deg, #fff9fb 0%, #ffe4f0 50%, #fff0f5 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        transition: opacity 0.5s ease, transform 0.5s ease;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      }
+
+      .loading-screen.hidden {
+        opacity: 0;
+        transform: scale(0.95);
+        pointer-events: none;
+      }
+
+      .loading-container {
+        width: 100%;
+        max-width: 400px;
+        padding: 40px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* Logo 区域 */
+      .logo-section {
+        position: relative;
+        margin-bottom: 40px;
+      }
+
+      .cloud-decoration {
+        position: absolute;
+        font-size: 24px;
+        opacity: 0.6;
+        animation: float 4s ease-in-out infinite;
+      }
+
+      .cloud-1 {
+        top: -20px;
+        left: -30px;
+        animation-delay: 0s;
+      }
+
+      .cloud-2 {
+        top: -15px;
+        right: -25px;
+        animation-delay: 0.5s;
+      }
+
+      .sakura-decoration {
+        font-size: 32px;
+        margin-bottom: 12px;
+        animation: rotateSakura 6s ease-in-out infinite;
+        display: inline-block;
+      }
+
+      .brand-name {
+        font-size: 32px;
+        font-weight: 600;
+        background: linear-gradient(135deg, #ed2ba5 0%, #ff6b9d 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        letter-spacing: 4px;
+        font-family: 'Noto Serif SC', 'PingFang SC', serif;
+      }
+
+      .brand-divider {
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(90deg, transparent, #ed2ba5, transparent);
+        margin: 16px auto 0;
+        border-radius: 2px;
+      }
+
+      /* 加载动画区域 */
+      .loading-animation {
+        position: relative;
+        width: 80px;
+        height: 80px;
+        margin-bottom: 32px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .baby-icon {
+        font-size: 40px;
+        z-index: 2;
+        animation: breathe 2s ease-in-out infinite;
+      }
+
+      .pulse-ring {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border: 2px solid rgba(237, 43, 165, 0.3);
+        border-radius: 50%;
+        animation: pulse 2s ease-out infinite;
+      }
+
+      /* 进度条区域 */
+      .progress-section {
+        width: 100%;
+        margin-bottom: 24px;
+      }
+
+      .progress-bar-container {
+        position: relative;
+        width: 100%;
+        height: 8px;
+        background: rgba(237, 43, 165, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+
+      .progress-bar {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #ed2ba5 0%, #ff6b9d 50%, #ed2ba5 100%);
+        background-size: 200% 100%;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+        box-shadow: 0 0 10px rgba(237, 43, 165, 0.3);
+        animation: shimmer 2s linear infinite;
+      }
+
+      .progress-shimmer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.4) 50%,
+          transparent 100%
+        );
+        animation: shimmerSlide 1.5s ease-in-out infinite;
+      }
+
+      .progress-text {
+        margin-top: 8px;
+        font-size: 14px;
+        color: #ed2ba5;
+        font-weight: 500;
+      }
+
+      /* 提示文字区域 */
+      .tips-section {
+        margin-bottom: 20px;
+        min-height: 24px;
+      }
+
+      .tip-text {
+        font-size: 15px;
+        color: #6b5b66;
+        animation: fadeInOut 3s ease-in-out infinite;
+      }
+
+      /* 统计数据区域 */
+      .stats-section {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: 20px;
+        backdrop-filter: blur(4px);
+      }
+
+      .stats-icon {
+        font-size: 14px;
+      }
+
+      .stats-text {
+        font-size: 13px;
+        color: #8b7b86;
+      }
+
+      .stats-text strong {
+        color: #ed2ba5;
+        font-weight: 600;
+      }
+
+      /* 底部版权区域 */
+      .footer-section {
+        position: absolute;
+        bottom: 40px;
+        left: 0;
+        right: 0;
+        text-align: center;
+      }
+
+      .footer-divider {
+        width: 40px;
+        height: 1px;
+        background: linear-gradient(90deg, transparent, rgba(237, 43, 165, 0.3), transparent);
+        margin: 0 auto 16px;
+      }
+
+      .copyright {
+        font-size: 12px;
+        color: #a89aa3;
+        margin-bottom: 4px;
+      }
+
+      .slogan {
+        font-size: 11px;
+        color: #c9bcc4;
+        letter-spacing: 2px;
+      }
+
+      /* ==================== 动画定义 ==================== */
+      @keyframes float {
+        0%, 100% { transform: translateX(0) translateY(0); }
+        25% { transform: translateX(5px) translateY(-3px); }
+        50% { transform: translateX(0) translateY(-5px); }
+        75% { transform: translateX(-5px) translateY(-3px); }
+      }
+
+      @keyframes rotateSakura {
+        0%, 100% { transform: rotate(0deg) scale(1); }
+        25% { transform: rotate(5deg) scale(1.05); }
+        50% { transform: rotate(0deg) scale(1); }
+        75% { transform: rotate(-5deg) scale(1.05); }
+      }
+
+      @keyframes breathe {
+        0%, 100% { transform: scale(0.95); opacity: 0.8; }
+        50% { transform: scale(1.05); opacity: 1; }
+      }
+
+      @keyframes pulse {
+        0% { transform: scale(0.8); opacity: 0.6; }
+        100% { transform: scale(1.4); opacity: 0; }
+      }
+
+      @keyframes shimmer {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+      }
+
+      @keyframes shimmerSlide {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+      }
+
+      @keyframes fadeInOut {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 1; }
+      }
+
+      /* 响应式适配 */
+      @media (max-width: 480px) {
+        .loading-container {
+          padding: 32px 20px;
+        }
+
+        .brand-name {
+          font-size: 28px;
+        }
+
+        .baby-icon {
+          font-size: 36px;
+        }
+
+        .tip-text {
+          font-size: 14px;
+        }
+
+        .footer-section {
+          bottom: 32px;
+        }
+      }
+
+      @media (min-width: 768px) {
+        .loading-container {
+          max-width: 480px;
+        }
+
+        .brand-name {
+          font-size: 36px;
+        }
+
+        .baby-icon {
+          font-size: 48px;
+        }
+      }
     </style>
   <script type="importmap">
 {
@@ -60,7 +361,183 @@
 </script>
 </head>
   <body>
+    <!-- 首次加载过渡页 - 纯CSS实现，不依赖外部字体 -->
+    <div id="loading-screen" class="loading-screen">
+      <div class="loading-container">
+        <!-- Logo 区域 -->
+        <div class="logo-section">
+          <div class="cloud-decoration cloud-1">☁️</div>
+          <div class="cloud-decoration cloud-2">☁️</div>
+          <div class="sakura-decoration">🌸</div>
+          <div class="brand-name">大师起名</div>
+          <div class="brand-divider"></div>
+        </div>
+
+        <!-- 加载动画区域 -->
+        <div class="loading-animation">
+          <div class="baby-icon">👶</div>
+          <div class="pulse-ring"></div>
+        </div>
+
+        <!-- 进度条 -->
+        <div class="progress-section">
+          <div class="progress-bar-container">
+            <div class="progress-bar" id="progress-bar"></div>
+            <div class="progress-shimmer"></div>
+          </div>
+          <div class="progress-text">
+            <span id="progress-percent">0</span>%
+          </div>
+        </div>
+
+        <!-- 提示文字 -->
+        <div class="tips-section">
+          <div class="tip-text" id="tip-text">正在准备千万名字库...</div>
+        </div>
+
+        <!-- 统计数据 -->
+        <div class="stats-section">
+          <span class="stats-icon">✨</span>
+          <span class="stats-text">已分析 <strong>1,280,000+</strong> 个吉祥名字</span>
+        </div>
+      </div>
+
+      <!-- 底部版权 -->
+      <div class="footer-section">
+        <div class="footer-divider"></div>
+        <div class="copyright">© 2024 大师起名</div>
+        <div class="slogan">传承文化 · 赋予美好</div>
+      </div>
+    </div>
+
     <div id="root"></div>
   <script type="module" src="/index.tsx"></script>
+
+  <script>
+    // ==================== 首次加载过渡页逻辑 ====================
+    (function() {
+      const loadingScreen = document.getElementById('loading-screen');
+      const progressBar = document.getElementById('progress-bar');
+      const progressPercent = document.getElementById('progress-percent');
+      const tipText = document.getElementById('tip-text');
+
+      // 提示文字轮换
+      const tips = [
+        '正在准备千万名字库...',
+        '正在加载五行八字算法...',
+        '正在整理诗经楚辞典籍...',
+        '正在初始化智能分析引擎...',
+        '即将为您呈现...'
+      ];
+
+      let currentTipIndex = 0;
+      let progress = 0;
+      let isComplete = false;
+
+      // 轮换提示文字
+      function rotateTips() {
+        setInterval(() => {
+          if (isComplete) return;
+          currentTipIndex = (currentTipIndex + 1) % tips.length;
+          tipText.style.opacity = '0';
+          setTimeout(() => {
+            tipText.textContent = tips[currentTipIndex];
+            tipText.style.opacity = '1';
+          }, 250);
+        }, 3000);
+      }
+
+      // 更新进度
+      function updateProgress() {
+        const interval = setInterval(() => {
+          if (isComplete) {
+            clearInterval(interval);
+            return;
+          }
+
+          // 非线性增长，模拟真实加载
+          const increment = Math.random() * 15 + 5;
+          progress = Math.min(progress + increment, 90);
+
+          progressBar.style.width = progress + '%';
+          progressPercent.textContent = Math.floor(progress);
+
+          if (progress >= 90) {
+            clearInterval(interval);
+          }
+        }, 400);
+      }
+
+      // 完成加载
+      function completeLoading() {
+        isComplete = true;
+        progress = 100;
+        progressBar.style.width = '100%';
+        progressPercent.textContent = '100';
+        tipText.textContent = '准备就绪!';
+        tipText.style.color = '#ed2ba5';
+        tipText.style.fontWeight = '500';
+
+        setTimeout(() => {
+          loadingScreen.classList.add('hidden');
+          // 完全隐藏后从 DOM 移除
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
+        }, 600);
+      }
+
+      // 检测字体是否加载完成
+      function checkFontsLoaded() {
+        if (document.fonts) {
+          return Promise.all([
+            document.fonts.load('1em "Noto Sans SC"'),
+            document.fonts.load('1em "Noto Serif SC"'),
+            document.fonts.load('1em "Material Symbols Outlined"')
+          ]).catch(() => {
+            // 字体加载失败也继续，使用系统字体
+            console.log('部分字体加载失败，使用系统字体');
+          });
+        }
+        return Promise.resolve();
+      }
+
+      // 检测页面资源加载状态
+      function waitForResources() {
+        return new Promise((resolve) => {
+          if (document.readyState === 'complete') {
+            resolve();
+          } else {
+            window.addEventListener('load', resolve);
+          }
+        });
+      }
+
+      // 启动加载流程
+      function init() {
+        rotateTips();
+        updateProgress();
+
+        // 等待字体和资源加载完成
+        Promise.all([
+          checkFontsLoaded(),
+          waitForResources()
+        ]).then(() => {
+          // 确保最少显示 2 秒，避免闪烁
+          setTimeout(completeLoading, 2000);
+        }).catch(() => {
+          // 出错也继续完成
+          setTimeout(completeLoading, 2000);
+        });
+      }
+
+      // DOM 就绪后立即启动
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>
