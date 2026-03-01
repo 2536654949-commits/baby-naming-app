@@ -27,9 +27,26 @@ export function createApp(): Application {
       if (!origin) {
         return callback(null, true);
       }
-      // 检查是否在允许列表中
-      if (frontendUrls.some(url => origin === url || origin.startsWith(url.replace(/\/$/, '')))) {
-        return callback(null, true);
+      // 生产环境：允许所有 vercel.app 子域名和配置的域名
+      if (process.env.NODE_ENV === 'production') {
+        const allowedPatterns = [
+          ...frontendUrls,
+          /\.vercel\.app$/,
+        ];
+        const isAllowed = allowedPatterns.some(pattern => {
+          if (pattern instanceof RegExp) {
+            return pattern.test(origin);
+          }
+          return origin === pattern || origin.startsWith(pattern.replace(/\/$/, ''));
+        });
+        if (isAllowed) {
+          return callback(null, true);
+        }
+      } else {
+        // 开发环境：检查是否在允许列表中
+        if (frontendUrls.some(url => origin === url || origin.startsWith(url.replace(/\/$/, '')))) {
+          return callback(null, true);
+        }
       }
       callback(new Error('CORS not allowed'));
     },

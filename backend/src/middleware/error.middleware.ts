@@ -18,6 +18,9 @@ export const errorHandler = (
     method: req.method,
     path: req.path,
     ip: req.ip,
+    // 记录更多调试信息
+    prisma: (error as any).code?.startsWith?.('P') ? (error as any).code : undefined,
+    meta: (error as any).meta,
   });
 
   // 处理ApiError
