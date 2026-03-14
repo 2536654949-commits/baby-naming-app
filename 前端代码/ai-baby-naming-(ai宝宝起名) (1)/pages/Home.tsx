@@ -30,7 +30,7 @@ const Home: React.FC = () => {
           <div className="bg-white rounded-[2rem] shadow-soft border border-pink-50 overflow-hidden">
             <div 
               className="h-56 w-full bg-cover bg-center"
-              style={{ backgroundImage: `url('https://lh3.googleusercontent.com/aida-public/AB6AXuA1hRwCh67_zykNI5mBLRtAhNUw0XTCD9-FkA5WYI76mbS0Fk6qIKWeOXnZvbXJrDBAgea_X11rrXA73HrCGX-9qutLT23DgrmujxfUhCgxr0xtBvqjXIDOpzkjVxMgPDwFeDQADOHEYmZzQprPq8UMEWqo8xGHtjwe41vKurhxSKH18XChN6DOrqoBzAVISPChFfweXTvE5GgNEOTLmfGsYSW79467Y3UvZfGut6tepEK6v-0iBXwRxAeEggMJHA_JFv_e0G1RB00')` }}
+              style={{ backgroundImage: `url('/images/hero-banner.jpg')` }}
             ></div>
             <div className="p-6">
               <div className="flex items-center gap-3 mb-3">

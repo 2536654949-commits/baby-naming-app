@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>大师起名 · 千万名字库</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
+    <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.loli.net/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
     <script>
       tailwind.config = {
         theme: {
@@ -487,10 +487,11 @@
         }, 600);
       }
 
-      // 检测字体是否加载完成
+      // 检测字体是否加载完成（最多等待 5 秒，防止国内镜像超时卡死）
       function checkFontsLoaded() {
+        const timeout = new Promise(resolve => setTimeout(resolve, 5000));
         if (document.fonts) {
-          return Promise.all([
+          const fontLoad = Promise.all([
             document.fonts.load('1em "Noto Sans SC"'),
             document.fonts.load('1em "Noto Serif SC"'),
             document.fonts.load('1em "Material Symbols Outlined"')
@@ -498,6 +499,7 @@
             // 字体加载失败也继续，使用系统字体
             console.log('部分字体加载失败，使用系统字体');
           });
+          return Promise.race([fontLoad, timeout]);
         }
         return Promise.resolve();
       }
