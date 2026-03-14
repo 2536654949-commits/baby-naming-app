@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>大师起名 · 千万名字库</title>
-    <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.loli.net/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700;900&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.loli.net/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1" rel="stylesheet" />
     <script>
@@ -515,21 +514,24 @@
         });
       }
 
+      // 额外的兜底超时：无论如何，8秒后强制完成
+      function hardTimeout() {
+        return new Promise(resolve => setTimeout(resolve, 8000));
+      }
+
       // 启动加载流程
       function init() {
         rotateTips();
         updateProgress();
 
-        // 等待字体和资源加载完成
-        Promise.all([
-          checkFontsLoaded(),
-          waitForResources()
+        // 等待字体和资源加载完成，但最多等 8 秒（兜底）
+        Promise.race([
+          Promise.all([checkFontsLoaded(), waitForResources()]),
+          hardTimeout()
         ]).then(() => {
-          // 确保最少显示 2 秒，避免闪烁
-          setTimeout(completeLoading, 2000);
+          setTimeout(completeLoading, 500);
         }).catch(() => {
-          // 出错也继续完成
-          setTimeout(completeLoading, 2000);
+          setTimeout(completeLoading, 500);
         });
       }
 
